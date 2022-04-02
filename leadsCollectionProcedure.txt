@@ -1,0 +1,115 @@
+Lead Collection Project
+-----------------------
+Step 00:
+
+
+
+
+
+Step 00 (Creating the front-end base):
+Go to bootstrap and copy the code for startup template. Paste the template code in the "index.html" file(replace the previous index.html codes)
+
+Now, take a div class="container", under which we will take another div class="row", under which we will take another class="column"(with md-12).
+we can use margin to make it look better according to our need.
+
+Go to bootstrap and copy the code for table template. Paste this code under the div class="col-md-12" tag.
+Keep only one row(<tr>) and it's corresponding table headers(<th>) and we will make these dynamic.
+
+Go to bootstrap and copy the code for basic form template. Paste this code befor the "table" code.
+Customize the form template according to your need. There will be 4 fields in our project: 1) Name(text), 
+(2) Phone(text), (3) Email(email), (4) Designation(text). along with the input type, we need to give a name to each of the fields. type name="name",
+name="phone", name="email", name="designation" for respected fields.
+
+
+Step 00 (back-end):
+Go to "models.py", create a model class(class Leads(models.Model)).
+describe the data fields according to your need like:
+
+name=models.Charfield(max_length=40) //max_length is used for validation
+                                     //There are many types of fields except Charfield
+
+we can define a function under the class, so when we will call an object of this class, the function which
+is created the class will also be called.
+
+def __str__(self): //__str__ means the function is of string type
+    return self.name
+
+after creating the model we need to make migrations and migrate. open CMD and type:
+->python manage.py makemigrations
+->python manage.py migrate
+
+Go to "admin.py" and import the Leads class here. type:
+
+from .models import Leads
+
+now create a class here(class LeadsAdmin(admin.ModelAdmin)). We can make a list and show the cells of the database.
+
+list_display = ['name','phone','email','designation']
+
+these data will be shown to the admin. 
+finally we need to register the database:
+
+admin.site.register(Leads, LeadsAdmin)
+
+our project is now connected to the admin (localhost:8000/admin)
+
+create a new file called "forms.py" under our project's root folder. open the file and import forms from "django" and
+import Leads from ".model". now create a class(class LeadsFrom(forms.ModelForm)). now create a meta class:
+
+class Meta:
+    model=Leads
+    fields= ('name','phone','email','designation')
+
+go to the "views.py", import the LeadForm from ".forms"
+inside the index function we need to create the POST method now.
+
+if request.method == 'POST':
+    form = LeadsForm(request.POST)
+    if form.is_valid():
+        form.save()
+        return redirect('/') //redirecting to homepage after saving the form
+else 
+    form = LeadsForm()
+
+
+Step 00 (back to the front-end):
+go to "index.html" and go to the form tag. inside the starting tag, we need to add action(="") and method(="post").
+under the form tag we need to add csrf template by adding "{% csrf_token %}"
+
+go to the "views.py" and import Leads from ".model". now create an object of lead type.
+
+leads = Leads.objects.all()
+context = {
+    'leads': leads 
+}
+return render(request, 'index.html', context)
+
+now go to the "index.html" and edit the <tr> tag to make the table dynamic.
+
+{% for data in leads %} //as we have more than one object, so we need to iterate using a loop
+    <tr>
+        <th>{{ data.id }}</th>
+        <td>{{ data.name }}</td>
+        <td>{{ data.phone }}</td>
+        <td>{{ data.email }}</td>
+        <td>{{ data.designation }}</td>
+   </tr>
+{% endfor %}
+
+now we need to add pagination, so go to the "views.py" and import paginator:
+from django.core.paginator import Paginator.
+
+inside the index funtion call the paginator: //code from django pagination
+paginator = Paginator(leads, 2) //2 objects/leads in one page
+
+page_number = =request.GET.get('page')
+page_obj = paginator.get_page(page_number)
+
+edit the context:
+context = {
+    'page_obj' : page_obj
+}
+go to the "index.html" and edit the for lool:
+{% for data in page_obj %}
+
+after the column tag in "index.html", add the pagination feature copied from django pagination(google it).
